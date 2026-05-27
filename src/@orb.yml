@@ -1,0 +1,8 @@
+version: 2.1
+
+description: >
+  Orb to set up deploy markers and other Deploys features
+
+display:
+  home_url: "https://circleci.com/docs/deploys"
+  source_url: "https://github.com/CircleCI-Public/circleci-deploys-orb"

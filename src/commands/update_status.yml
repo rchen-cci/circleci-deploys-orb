@@ -1,0 +1,44 @@
+description: >
+  Update the status of a planned deployment marker.
+  Use the 'when' parameter to control conditional execution
+  (on_success, on_fail, always). This is necessary because the
+  CircleCI 'when' step attribute cannot be applied to orb command
+  invocations directly — it only applies to 'run' steps.
+
+parameters:
+  deploy_name:
+    type: string
+    default: "deploy"
+    description: Must match the deploy_name used in the corresponding deploys/plan step.
+  status:
+    type: enum
+    enum: [RUNNING, SUCCESS, FAILED, CANCELED]
+    description: >
+      The status to set on the deployment marker. Values are
+      case-sensitive and must be uppercase, except RUNNING which
+      the CLI also accepts as lowercase 'running'.
+  failure_reason:
+    type: string
+    default: ""
+    description: Optional failure reason shown in the Deploys UI. Only used when status is FAILED.
+  when:
+    type: enum
+    enum: [on_success, on_fail, always]
+    default: on_success
+    description: >
+      Controls when this step executes. Maps to the 'when' attribute
+      on the underlying run step. Use on_success for SUCCESS status,
+      on_fail for FAILED status, and always for RUNNING or CANCELED.
+
+steps:
+  - run:
+      name: Update deployment marker status to << parameters.status >>
+      when: << parameters.when >>
+      command: |
+        FAILURE_ARG=""
+        if [ -n "<< parameters.failure_reason >>" ]; then
+          FAILURE_ARG="--failure-reason=\"<< parameters.failure_reason >>\""
+        fi
+        circleci run release update "<< parameters.deploy_name >>" \
+          --status=<< parameters.status >> \
+          $FAILURE_ARG

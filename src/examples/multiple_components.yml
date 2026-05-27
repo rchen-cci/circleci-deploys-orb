@@ -1,0 +1,54 @@
+version: 2.1
+
+orbs:
+  deploys: circleci/deploys@1.0
+  aws-cli: circleci/aws-cli@5.4
+
+jobs:
+  deploy-frontend:
+    steps:
+      - deploys/plan:
+          deploy_name: frontend-deploy
+          component_name: frontend
+          environment_name: production
+          target_version: ${CIRCLE_SHA1:0:7}
+      - aws-cli/setup:
+          role_arn: ${AWS_ROLE_ARN}
+      - run:
+          name: Deploy Frontend
+          command: ./deploy-frontend.sh
+      - deploys/update_status:
+          deploy_name: frontend-deploy
+          status: SUCCESS
+          when: on_success
+      - deploys/update_status:
+          deploy_name: frontend-deploy
+          status: FAILED
+          when: on_fail
+
+  deploy-backend:
+    steps:
+      - deploys/plan:
+          deploy_name: backend-deploy
+          component_name: backend
+          environment_name: production
+          target_version: ${CIRCLE_SHA1:0:7}
+      - aws-cli/setup:
+          role_arn: ${AWS_ROLE_ARN}
+      - run:
+          name: Deploy Backend
+          command: ./deploy-backend.sh
+      - deploys/update_status:
+          deploy_name: backend-deploy
+          status: SUCCESS
+          when: on_success
+      - deploys/update_status:
+          deploy_name: backend-deploy
+          status: FAILED
+          when: on_fail
+
+workflows:
+  deploy:
+    jobs:
+      - deploy-frontend
+      - deploy-backend

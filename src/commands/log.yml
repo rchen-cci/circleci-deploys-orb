@@ -1,0 +1,47 @@
+description: >
+  Log a deployment event in the CircleCI Deploys UI without status lifecycle tracking.
+  Use this when you do not need plan/update status management, or when calling from
+  a custom job where you manage deploy steps yourself.
+
+parameters:
+  component_name:
+    type: string
+    default: ""
+  environment_name:
+    type: string
+    default: ""
+  namespace:
+    type: string
+    default: ""
+  target_version:
+    type: string
+    default: ""
+    description: >
+      Version identifier shown in the Deploys UI.
+      If not provided, defaults to the short commit SHA at runtime.
+
+steps:
+  - run:
+      name: Log deployment marker
+      command: |
+        COMPONENT_ARG=""
+        ENV_ARG=""
+        NAMESPACE_ARG=""
+        VERSION="<< parameters.target_version >>"
+        if [ -z "$VERSION" ]; then
+          VERSION="${CIRCLE_SHA1:0:7}"
+        fi
+        if [ -n "<< parameters.component_name >>" ]; then
+          COMPONENT_ARG="--component-name=<< parameters.component_name >>"
+        fi
+        if [ -n "<< parameters.environment_name >>" ]; then
+          ENV_ARG="--environment-name=<< parameters.environment_name >>"
+        fi
+        if [ -n "<< parameters.namespace >>" ]; then
+          NAMESPACE_ARG="--namespace=<< parameters.namespace >>"
+        fi
+        circleci run release log \
+          $COMPONENT_ARG \
+          $ENV_ARG \
+          $NAMESPACE_ARG \
+          --target-version="$VERSION"

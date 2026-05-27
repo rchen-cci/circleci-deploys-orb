@@ -1,0 +1,60 @@
+description: >
+  Plan a deployment marker. Call this before your deploy step.
+  The marker will appear in the CircleCI Deploys UI with pending status.
+  Follow up with deploys/update_status to update the status as the
+  deployment progresses, or use deploys/log instead if you do not need
+  status lifecycle tracking.
+
+parameters:
+  deploy_name:
+    type: string
+    default: "deploy"
+    description: >
+      Unique identifier for this deployment within the workflow.
+      Must be unique if planning multiple deployments in the same workflow.
+  component_name:
+    type: string
+    default: ""
+    description: Component name shown in the Deploys UI. Defaults to project name if not set.
+  environment_name:
+    type: string
+    default: ""
+    description: Target environment name. Defaults to 'default' if not set.
+  namespace:
+    type: string
+    default: ""
+    description: >
+      Namespace of the deployment. Relevant for Kubernetes deployments.
+      Defaults to 'default' if not set.
+  target_version:
+    type: string
+    default: ""
+    description: >
+      Version identifier shown in the Deploys UI.
+      If not provided, defaults to the short commit SHA at runtime.
+
+steps:
+  - run:
+      name: Plan deployment marker
+      command: |
+        COMPONENT_ARG=""
+        ENV_ARG=""
+        NAMESPACE_ARG=""
+        VERSION="<< parameters.target_version >>"
+        if [ -z "$VERSION" ]; then
+          VERSION="${CIRCLE_SHA1:0:7}"
+        fi
+        if [ -n "<< parameters.component_name >>" ]; then
+          COMPONENT_ARG="--component-name=<< parameters.component_name >>"
+        fi
+        if [ -n "<< parameters.environment_name >>" ]; then
+          ENV_ARG="--environment-name=<< parameters.environment_name >>"
+        fi
+        if [ -n "<< parameters.namespace >>" ]; then
+          NAMESPACE_ARG="--namespace=<< parameters.namespace >>"
+        fi
+        circleci run release plan "<< parameters.deploy_name >>" \
+          $COMPONENT_ARG \
+          $ENV_ARG \
+          $NAMESPACE_ARG \
+          --target-version="$VERSION"

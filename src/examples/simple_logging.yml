@@ -1,0 +1,22 @@
+version: 2.1
+
+orbs:
+  deploys: circleci/deploys@1.0
+  aws-cli: circleci/aws-cli@5.4
+
+jobs:
+  deploy:
+    docker:
+      - image: cimg/aws:2025.01
+    steps:
+      - checkout
+      - aws-cli/setup:
+          role_arn: ${AWS_ROLE_ARN}
+      - run:
+          name: Deploy
+          command: ./deploy.sh
+      - deploys/log:
+          component_name: my-service
+          environment_name: production
+          namespace: my-namespace
+          target_version: ${CIRCLE_SHA1:0:7}
