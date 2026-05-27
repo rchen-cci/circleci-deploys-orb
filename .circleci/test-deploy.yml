@@ -1,9 +1,16 @@
 version: 2.1
+
 orbs:
   orb-tools: circleci/orb-tools@12.4.0
   deploys: {}
 
 filters: &filters
+  tags:
+    only: /.*/
+
+main-filters: &main-filters
+  branches:
+    only: main
   tags:
     only: /.*/
 
@@ -14,25 +21,61 @@ release-filters: &release-filters
     only: /^v[0-9]+\.[0-9]+\.[0-9]+$/
 
 jobs:
-  command-test:
+  test-log:
     docker:
       - image: cimg/base:current
     steps:
       - checkout
+      - deploys/log:
+          component_name: circleci-deploys-orb
+          environment_name: test
+          target_version: "log-${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1:0:7}"
+
 workflows:
   test-deploy:
     jobs:
-      - command-test:
-          context: circleci-deploys
-          filters: *filters
+      - test-log:
+          filters: *main-filters
       - orb-tools/pack:
-          filters: *release-filters
+          filters: *filters
       - orb-tools/publish:
+          name: publish_dev
+          orb_name: circleci/deploys
+          vcs_type: << pipeline.project.type >>
+          pub_type: dev
+          enable_pr_comment: true
+          requires:
+            - orb-tools/pack
+          context: orb-publisher
+          filters: *filters
+      - orb-tools/publish:
+          name: publish_prod
           orb_name: circleci/deploys
           vcs_type: << pipeline.project.type >>
           pub_type: production
+          pre-steps:
+            - deploys/plan:
+                deploy_name: orb-release
+                component_name: circleci-deploys-orb
+                environment_name: orb-registry
+                target_version: << pipeline.git.tag >>
+          post-steps:
+            - deploys/update_status:
+                deploy_name: orb-release
+                status: RUNNING
+                when: always
+            - deploys/update_status:
+                deploy_name: orb-release
+                status: SUCCESS
+                when: on_success
+            - deploys/update_status:
+                deploy_name: orb-release
+                status: FAILED
+                failure_reason: "orb publish failed"
+                when: on_fail
           requires:
+            - publish_dev
             - orb-tools/pack
-            - command-test
-          context: orb-pubisher
+            - test-log
+          context: orb-publisher
           filters: *release-filters
