@@ -1,38 +1,41 @@
-version: 2.1
+description: >
+  Full lifecycle of log, plan, and status update for deployment
+usage:
+  version: 2.1
 
-orbs:
-  deploys: circleci/deploys@1.0
-  aws-cli: circleci/aws-cli@5.4
+  orbs:
+    deploys: circleci/deploys@1.0
+    aws-cli: circleci/aws-cli@5.4
 
-jobs:
-  deploy:
-    docker:
-      - image: cimg/aws:2025.01
-    steps:
-      - checkout
-      - deploys/plan:
-          deploy_name: my-service-deploy
-          component_name: my-service
-          environment_name: production
-          namespace: my-namespace
-          target_version: ${CIRCLE_SHA1:0:7}
-      - aws-cli/setup:
-          role_arn: ${AWS_ROLE_ARN}
-      - run:
-          name: Deploy
-          command: ./deploy.sh
-      - deploys/update_status:
-          deploy_name: my-service-deploy
-          status: RUNNING
-          when: always
-      - run:
-          name: Validate
-          command: ./validate.sh
-      - deploys/update_status:
-          deploy_name: my-service-deploy
-          status: SUCCESS
-          when: on_success
-      - deploys/update_status:
-          deploy_name: my-service-deploy
-          status: FAILED
-          when: on_fail
+  jobs:
+    deploy:
+      docker:
+        - image: cimg/aws:2025.01
+      steps:
+        - checkout
+        - deploys/plan:
+            deploy_name: my-service-deploy
+            component_name: my-service
+            environment_name: production
+            namespace: my-namespace
+            target_version: ${CIRCLE_SHA1:0:7}
+        - aws-cli/setup:
+            role_arn: ${AWS_ROLE_ARN}
+        - run:
+            name: Deploy
+            command: ./deploy.sh
+        - deploys/update_status:
+            deploy_name: my-service-deploy
+            status: RUNNING
+            when: always
+        - run:
+            name: Validate
+            command: ./validate.sh
+        - deploys/update_status:
+            deploy_name: my-service-deploy
+            status: SUCCESS
+            when: on_success
+        - deploys/update_status:
+            deploy_name: my-service-deploy
+            status: FAILED
+            when: on_fail
