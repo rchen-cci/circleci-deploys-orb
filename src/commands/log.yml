@@ -23,25 +23,9 @@ parameters:
 steps:
   - run:
       name: Log deployment marker
-      command: |
-        COMPONENT_ARG=""
-        ENV_ARG=""
-        NAMESPACE_ARG=""
-        VERSION="<< parameters.target_version >>"
-        if [ -z "$VERSION" ]; then
-          VERSION="${CIRCLE_SHA1:0:7}"
-        fi
-        if [ -n "<< parameters.component_name >>" ]; then
-          COMPONENT_ARG="--component-name=<< parameters.component_name >>"
-        fi
-        if [ -n "<< parameters.environment_name >>" ]; then
-          ENV_ARG="--environment-name=<< parameters.environment_name >>"
-        fi
-        if [ -n "<< parameters.namespace >>" ]; then
-          NAMESPACE_ARG="--namespace=<< parameters.namespace >>"
-        fi
-        circleci run release log \
-          $COMPONENT_ARG \
-          $ENV_ARG \
-          $NAMESPACE_ARG \
-          --target-version="$VERSION"
+      environment:
+        PARAM_COMPONENT_NAME: << parameters.component_name >>
+        PARAM_ENVIRONMENT_NAME: << parameters.environment_name >>
+        PARAM_NAMESPACE: << parameters.namespace >>
+        PARAM_TARGET_VERSION: << parameters.target_version >>
+      command: <<include(scripts/log.sh)>>

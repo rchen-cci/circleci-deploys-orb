@@ -34,11 +34,8 @@ steps:
   - run:
       name: Update deployment marker status to << parameters.status >>
       when: << parameters.when >>
-      command: |
-        FAILURE_ARG=""
-        if [ -n "<< parameters.failure_reason >>" ]; then
-          FAILURE_ARG="--failure-reason=\"<< parameters.failure_reason >>\""
-        fi
-        circleci run release update "<< parameters.deploy_name >>" \
-          --status=<< parameters.status >> \
-          $FAILURE_ARG
+      environment:
+        PARAM_DEPLOY_NAME: << parameters.deploy_name >>
+        PARAM_STATUS: << parameters.status >>
+        PARAM_FAILURE_REASON: << parameters.failure_reason >>
+      command: <<include(scripts/update_status.sh)>>

@@ -1,8 +1,9 @@
 version: 2.1
 
 description: >
-  Orb to set up deploy markers and other Deploys features
+  Orb to set up deploy markers logging, planning, and updating release status.
+  Will also support other Deploys features such as setting up rollback pipelines and deploy pipelines.
 
 display:
-  home_url: "https://circleci.com/docs/deploys"
+  home_url: "https://circleci.com/docs/guides/deploy/configure-deploy-markers/"
   source_url: "https://github.com/CircleCI-Public/circleci-deploys-orb"
